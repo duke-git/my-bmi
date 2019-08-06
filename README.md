@@ -1,6 +1,6 @@
 # my-bmi
 
-> An electron-vue project for calculate personal BMI.
+> An electron-vue app for calculate personal BMI.
 
 #### Build Setup
 
