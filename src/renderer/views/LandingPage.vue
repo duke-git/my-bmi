@@ -51,32 +51,20 @@
 
 <script>
 export default {
-  name: "landing-page",
+  name: "LandingPage",
   components: {},
   methods: {
     start() {
-      alert("hahaha");
-    },
-    open(link) {
-      this.$electron.shell.openExternal(link);
+      this.$router.replace({ path: "/bmi-calculator" });
     }
+    // open(link) {
+    //   this.$electron.shell.openExternal(link);
+    // }
   }
 };
 </script>
 
-<style>
-@import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro");
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: "Source Sans Pro", sans-serif;
-}
-
+<style scoped>
 #wrapper {
   display: block;
   background: #7ebb85;

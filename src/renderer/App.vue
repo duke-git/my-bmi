@@ -5,11 +5,19 @@
 </template>
 
 <script>
-  export default {
-    name: 'my-bmi'
-  }
+export default {
+  name: "my-bmi"
+};
 </script>
 
 <style>
-  /* CSS */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font: 16px/2 microsoft yahei;
+}
 </style>

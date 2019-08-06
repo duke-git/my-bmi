@@ -7,12 +7,13 @@ export default new Router({
   routes: [
     {
       path: '/',
-      name: 'landing-page',
-      component: require('@/components/LandingPage/LandingPage.vue').default
+      name: 'LandingPage',
+      component: require('@/views/LandingPage.vue').default
     },
     {
-      path: '*',
-      redirect: '/'
+      path: '/bmi-calculator',
+      name: 'BMICalculator',
+      component: require('@/views/BMICalculator.vue').default
     }
   ]
 })
