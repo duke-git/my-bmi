@@ -21,7 +21,9 @@
     "postinstall": ""
   },
   "dependencies": {
+    "echarts": "^4.2.1",
     "element-ui": "^2.10.1",
+    "v-charts": "^1.19.0",
     "vue": "^2.5.16",
     "vue-bus": "^1.2.1",
     "vue-electron": "^1.0.6",

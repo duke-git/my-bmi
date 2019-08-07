@@ -106,7 +106,7 @@
           </div>
         </div>
         <div class="table-wrapper">
-          <span class="form-title">我的BMI历史记录</span>
+          <span class="form-title">我的BMI历史记录：</span>
           <table class="bim-table">
             <thead class="bim-table-head">
               <colgroup>
@@ -139,7 +139,11 @@
               </tr>
             </tbody>
           </table>
-          <el-pagination background layout="prev, pager, next" :page-size="1" :total="total"></el-pagination>
+          <el-pagination background layout="prev, pager, next" :page-size="10" :total="total"></el-pagination>
+        </div>
+        <div class="chart-wrapper">
+          <span class="form-title">体重/BMI趋势图示：</span>
+          <ve-line :data="chartData" :settings="chartSettings"></ve-line>
         </div>
       </el-main>
     </el-container>
@@ -174,7 +178,12 @@ export default {
       },
       tableData: [],
       bmiDefDigVisible: false,
-      total: 0
+      total: 0,
+      chartData: {
+        columns: ["日期", "体重", "BMI"],
+        rows: []
+      },
+      chartSettings: {}
     };
   },
   created() {
@@ -189,8 +198,23 @@ export default {
     initData() {
       let bmi = localStorage.getItem("bmi");
       if (bmi) {
-        this.tableData = JSON.parse(bmi);
-        this.total = this.tableData.length;
+        let bmis = JSON.parse(bmi);
+        this.tableData = bmis;
+        this.total = bmis.length;
+        let len = bmis.length > 30 ? 30 : bmis.length;
+
+        this.chartSettings = {
+          xAxisType: "time"
+        };
+
+        for (let i = 0; i < len; i++) {
+          let item = {
+            日期: bmis[i].date,
+            体重: bmis[i].weight,
+            BMI: bmis[i].bmi
+          };
+          this.chartData.rows.push(item);
+        }
       }
     },
     submitForm(formName) {
@@ -213,20 +237,25 @@ export default {
         weight: this.bmiForm.weight,
         bmi: bmiValue.toFixed(1)
       };
-
-      let bmi = localStorage.getItem("bmi");
-      if (bmi) {
-        let bmis = JSON.parse(bmi);
-        bmis.push(item);
-        localStorage.setItem("bmi", JSON.stringify(bmis));
+      let isSaveBMI = this.isSaveBMI;
+      if (isSaveBMI) {
+        let bmi = localStorage.getItem("bmi");
+        if (bmi) {
+          let bmis = JSON.parse(bmi);
+          bmis.push(item);
+          localStorage.setItem("bmi", JSON.stringify(bmis));
+        } else {
+          localStorage.setItem("bmi", JSON.stringify([item]));
+        }
+        this.$bus.emit("get-bmi");
       } else {
-        localStorage.setItem("bmi", JSON.stringify([item]));
+        this.tableData.push(item);
       }
+
       this.$message({
         type: "success",
         message: "添加成功!"
       });
-      this.$bus.emit("get-bmi");
     },
     caclBMI() {},
     resetForm(formName) {
@@ -286,7 +315,7 @@ export default {
 .note-wrapper {
   background: #fff;
   background-size: 25px auto;
-  padding: 10px 15px 5px 15px;
+  padding: 10px 15px 5px 0;
   position: relative;
 }
 
@@ -328,8 +357,6 @@ form {
 .form-title {
   font-size: 16px;
   display: inline-block;
-  margin-right: 20px;
-  margin-left: 10px;
   color: #409eff;
 }
 
@@ -382,5 +409,8 @@ form {
 .el-pagination {
   text-align: center;
   margin-top: 15px;
+}
+.chart-wrapper {
+  margin-top: 20px;
 }
 </style>
