@@ -1,7 +1,12 @@
 <template>
   <div id="wrapper">
     <el-container>
-      <el-header>BMI计算器</el-header>
+      <el-header>
+        <span class="back-index" title="返回首页" @click="backIndex()">
+          <i class="el-icon-back"></i>
+        </span>
+        <span>BMI计算器</span>
+      </el-header>
       <el-main>
         <div class="note-wrapper">
           <img class="ico" width="25" height="25" src="@/assets/note_icon.png" />
@@ -306,6 +311,10 @@ export default {
       });
       this.$bus.emit("get-bmi");
     },
+    backIndex() {
+      this.$router.replace({ path: "/" });
+    },
+
     showBmiDefDig() {}
   },
   beforeDestroy() {
@@ -329,6 +338,11 @@ export default {
   position: fixed;
   width: 100%;
   z-index: 100;
+  padding: 0 5px;
+  .back-index {
+    float: left;
+    cursor: pointer;
+  }
 }
 .el-main {
   margin-top: 50px;
