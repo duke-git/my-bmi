@@ -54,7 +54,7 @@
           </el-form>
           <div class="line"></div>
           <div class="bmi-note">
-            <p>计算公式：体质指数（BMI）= 体重（kg）÷ 身高^2（m）</p>
+            <p>BMI计算公式：体质指数（BMI）= 体重（kg）÷ 身高^2（m）</p>
             <table class="bim-table">
               <thead class="bim-table-head">
                 <tr>
@@ -107,6 +107,9 @@
         </div>
         <div class="table-wrapper">
           <span class="form-title">我的BMI历史记录：</span>
+          <span style="float:right;">
+            <el-button type="text" @click="clearData" size="small">清空历史记录</el-button>
+          </span>
           <table class="bim-table">
             <thead class="bim-table-head">
               <colgroup>
@@ -257,7 +260,25 @@ export default {
         message: "添加成功!"
       });
     },
-    caclBMI() {},
+    clearData() {
+      this.$confirm(
+        "此操作将删除所有历史记录, 数据无法恢复，请谨慎选择。是否继续?",
+        "提示",
+        {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        }
+      )
+        .then(() => {
+          localStorage.deletedItem("bim");
+          this.$message({
+            type: "success",
+            message: "清除数据成功!"
+          });
+        })
+        .catch(() => {});
+    },
     resetForm(formName) {
       this.$refs[formName].resetFields();
     },
@@ -375,7 +396,9 @@ form {
 .bmi-note {
   position: absolute;
   top: 0;
-  right: 10px;
+  right: 0;
+  width: 50%;
+  text-align: center;
 
   p {
     font-size: 16px;
@@ -385,7 +408,7 @@ form {
 }
 
 .table-wrapper {
-  margin-top: 20px;
+  margin-top: 40px;
 }
 
 .bim-table {
