@@ -24,10 +24,10 @@
         <div class="form-wrapper">
           <span class="form-title">请输入个人信息</span>
           <el-checkbox v-model="isSaveBMI">自动保存 BMI 历史记录</el-checkbox>
-          <el-form :model="bimForm" :rules="rules" ref="bimForm" label-width="100px" class="bimorm">
+          <el-form :model="bmiForm" :rules="rules" ref="bmiForm" label-width="100px" class="bimorm">
             <el-form-item label="身高(cm)：" prop="height">
               <el-input-number
-                v-model="bimForm.height"
+                v-model="bmiForm.height"
                 :precision="2"
                 :step="0.1"
                 size="medium"
@@ -38,7 +38,7 @@
             </el-form-item>
             <el-form-item label="体重(kg)：" prop="weight">
               <el-input-number
-                v-model="bimForm.weight"
+                v-model="bmiForm.weight"
                 :precision="2"
                 :step="0.1"
                 size="medium"
@@ -48,8 +48,8 @@
               ></el-input-number>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" @click="submitForm('bimForm')">计算</el-button>
-              <el-button @click="resetForm('bimForm')">重置</el-button>
+              <el-button type="primary" @click="submitForm('bmiForm')">计算</el-button>
+              <el-button @click="resetForm('bmiForm')">重置</el-button>
             </el-form-item>
           </el-form>
           <div class="line"></div>
@@ -118,7 +118,7 @@
                 <col width="15%" />
               </colgroup>
               <tr>
-                <th>编号</th>
+                <th>ID</th>
                 <th>日期</th>
                 <th>身高</th>
                 <th>体重</th>
@@ -130,8 +130,8 @@
               <tr v-for="(item, index) in tableData" :key="index">
                 <td>{{item.id}}</td>
                 <td>{{item.date}}</td>
-                <td>{{item.height}}</td>
-                <td>{{item.weight}}</td>
+                <td>{{item.height + "cm"}}</td>
+                <td>{{item.weight + "kg"}}</td>
                 <td>{{item.bmi}}</td>
                 <td>
                   <el-button type="text" @click="handleDelete(item)" size="small">删除</el-button>
@@ -164,7 +164,7 @@ export default {
   data() {
     return {
       isSaveBMI: true,
-      bimForm: {
+      bmiForm: {
         height: "",
         weight: ""
       },
@@ -172,49 +172,94 @@ export default {
         height: [{ required: true, message: "请输入身高", trigger: "blur" }],
         weight: [{ required: true, message: "请输入体重", trigger: "blur" }]
       },
-      tableData: [
-        {
-          id: "001",
-          date: "2010-01-01",
-          height: "167cm",
-          weight: "54kg",
-          bmi: 24.1
-        },
-        {
-          id: "002",
-          date: "2010-01-01",
-          height: "167cm",
-          weight: "54kg",
-          bmi: 24.1
-        }
-      ],
+      tableData: [],
       bmiDefDigVisible: false,
       total: 0
     };
+  },
+  created() {
+    this.$bus.on("get-bmi", () => {
+      this.initData();
+    });
   },
   mounted() {
     this.initData();
   },
   methods: {
     initData() {
-      this.total = this.tableData.length;
+      let bmi = localStorage.getItem("bmi");
+      if (bmi) {
+        this.tableData = JSON.parse(bmi);
+        this.total = this.tableData.length;
+      }
     },
     submitForm(formName) {
       this.$refs[formName].validate(valid => {
         if (valid) {
-          alert("submit!");
+          let bmiValue =
+            this.bmiForm.weight / Math.pow(this.bmiForm.height * 0.01, 2);
+          this.saveBMI(bmiValue);
         } else {
-          console.log("error submit!!");
           return false;
         }
       });
     },
+    saveBMI(bmiValue) {
+      let d = new Date();
+      let item = {
+        id: d.getTime(),
+        date: this.utils.getDatetime(d),
+        height: this.bmiForm.height,
+        weight: this.bmiForm.weight,
+        bmi: bmiValue.toFixed(1)
+      };
+
+      let bmi = localStorage.getItem("bmi");
+      if (bmi) {
+        let bmis = JSON.parse(bmi);
+        bmis.push(item);
+        localStorage.setItem("bmi", JSON.stringify(bmis));
+      } else {
+        localStorage.setItem("bmi", JSON.stringify([item]));
+      }
+      this.$message({
+        type: "success",
+        message: "添加成功!"
+      });
+      this.$bus.emit("get-bmi");
+    },
+    caclBMI() {},
     resetForm(formName) {
       this.$refs[formName].resetFields();
     },
-    addBMI() {},
-    handleDelete() {},
+    handleDelete(deletedItem) {
+      this.$confirm("此操作将永久删该条记录, 是否继续?", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      })
+        .then(() => {
+          this.deleteBmiItem(deletedItem);
+        })
+        .catch(() => {});
+    },
+    deleteBmiItem(deletedItem) {
+      let bmi = localStorage.getItem("bmi");
+      let bmis = JSON.parse(bmi);
+      bmis = bmis.filter(item => {
+        return item.id != deletedItem.id;
+      });
+      localStorage.setItem("bmi", JSON.stringify(bmis));
+      this.$message({
+        type: "success",
+        message: "删除成功!"
+      });
+      this.$bus.emit("get-bmi");
+    },
     showBmiDefDig() {}
+  },
+  beforeDestroy() {
+    this.$bus.off("get-bmi", () => {});
   }
 };
 </script>
@@ -225,14 +270,19 @@ export default {
 }
 
 .el-header {
-  height: 60px;
+  height: 40px !important;
   text-align: center;
-  font-size: 24px;
-  line-height: 60px;
+  font-size: 22px;
+  line-height: 40px;
   color: white;
   background: #5f87d8;
+  position: fixed;
+  width: 100%;
+  z-index: 100;
 }
-
+.el-main {
+  margin-top: 50px;
+}
 .note-wrapper {
   background: #fff;
   background-size: 25px auto;
@@ -326,6 +376,7 @@ form {
 
 .bim-table-body {
   text-align: center;
+  color: #606266;
 }
 
 .el-pagination {

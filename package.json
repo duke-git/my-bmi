@@ -23,6 +23,7 @@
   "dependencies": {
     "element-ui": "^2.10.1",
     "vue": "^2.5.16",
+    "vue-bus": "^1.2.1",
     "vue-electron": "^1.0.6",
     "vue-router": "^3.0.1",
     "vuex-electron": "^1.0.0"
