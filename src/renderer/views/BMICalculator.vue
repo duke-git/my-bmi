@@ -13,7 +13,6 @@
           <p class="p1">通过身高体重计算你的BMI值，从而得出你的身体状况评估，高于24你就是超重啦。</p>
           <p class="p2">（*本工具仅适合正常非孕期健康成年人）</p>
         </div>
-
         <div class="bim-qa">
           <el-popover
             placement="top-start"
