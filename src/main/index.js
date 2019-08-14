@@ -1,5 +1,9 @@
 import { app, BrowserWindow } from 'electron'
-
+const electron = require('electron');
+const path = require('path');
+const Menu = electron.Menu;
+const Tray = electron.Tray;
+let appTray = null;
 /**
  * Set `__static` path to static files in production
  * https://simulatedgreg.gitbooks.io/electron-vue/content/en/using-static-assets.html
@@ -14,9 +18,6 @@ const winURL = process.env.NODE_ENV === 'development'
   : `file://${__dirname}/index.html`
 
 function createWindow() {
-  /**
-   * Initial window options
-   */
   mainWindow = new BrowserWindow({
     height: 563,
     useContentSize: true,
@@ -28,7 +29,27 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null
   })
+
+  let trayMenu = [
+    {
+      label: '退出应用',
+      click: function () {
+        app.quit();
+      }
+    }
+  ]
+
+  //系统托盘图标目录
+  let trayIcon = path.join(__dirname, '../../static');
+  appTray = new Tray(path.join(trayIcon, 'app.ico'));
+  const contextMenu = Menu.buildFromTemplate(trayMenu);
+  appTray.setToolTip('我的BMI');
+  appTray.setContextMenu(contextMenu);
+  appTray.on('click', function () {
+    mainWindow.show();
+  });
 }
+
 
 app.on('ready', createWindow)
 

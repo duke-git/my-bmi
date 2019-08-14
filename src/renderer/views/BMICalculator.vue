@@ -13,7 +13,7 @@
           <p class="p1">通过身高体重计算你的BMI值，从而得出你的身体状况评估，高于24你就是超重啦。</p>
           <p class="p2">（*本工具仅适合正常非孕期健康成年人）</p>
         </div>
-        <div class="bim-qa">
+        <div class="bmi-qa">
           <el-popover
             placement="top-start"
             title="BMI小常识"
@@ -27,8 +27,8 @@
         </div>
         <div class="form-wrapper">
           <span class="form-title">请输入个人信息</span>
-          <el-checkbox v-model="isSaveBMI">自动保存 BMI 历史记录</el-checkbox>
-          <el-form :model="bmiForm" :rules="rules" ref="bmiForm" label-width="100px" class="bimorm">
+          <div class="form-note">注：由于BMI值短时间波动稳定，每天只会保存一次计算结果，多次计算会覆盖同一天之前的结果。</div>
+          <el-form :model="bmiForm" :rules="rules" ref="bmiForm" label-width="100px" class="bmiorm">
             <el-form-item label="身高(cm)：" prop="height">
               <el-input-number
                 v-model="bmiForm.height"
@@ -51,6 +51,9 @@
                 placeholder="体重, 自动保留2位小数"
               ></el-input-number>
             </el-form-item>
+            <el-form-item label prop="isSaveBMI">
+              <el-switch v-model="isSaveBMI" active-text="是否保存本次记录"></el-switch>
+            </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="submitForm('bmiForm')">计算</el-button>
               <el-button @click="resetForm('bmiForm')">重置</el-button>
@@ -59,8 +62,8 @@
           <div class="line"></div>
           <div class="bmi-note">
             <p>BMI计算公式：体质指数（BMI）= 体重（kg）÷ 身高^2（m）</p>
-            <table class="bim-table">
-              <thead class="bim-table-head">
+            <table class="bmi-table" style="border: none;">
+              <thead class="bmi-table-head">
                 <tr>
                   <th>BMI分类</th>
                   <th>WHO标准</th>
@@ -68,7 +71,7 @@
                   <th>中国参考标准</th>
                 </tr>
               </thead>
-              <tbody class="bim-table-body">
+              <tbody class="bmi-table-body">
                 <tr>
                   <td>偏瘦</td>
                   <td>{{" < 18.5"}}</td>
@@ -110,22 +113,38 @@
           </div>
         </div>
         <div class="table-wrapper">
-          <span class="form-title">我的BMI历史记录：</span>
-          <span style="float:right;">
-            <el-button type="text" @click="clearData" size="small">清空历史记录</el-button>
-          </span>
-          <table class="bim-table">
-            <thead class="bim-table-head">
+          <div style="margin-bottom: 20px;">
+            <span class="form-title">我的BMI历史记录：</span>
+            <span style="float:right;">
+              <el-button type="text" @click="clearData" size="small">清空历史记录</el-button>
+            </span>
+            <div class="search-warpper">
+              <label>开始日期：</label>
+              <el-date-picker
+                v-model="search.dateRange"
+                type="daterange"
+                align="right"
+                size="small"
+                unlink-panels
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                :picker-options="datePickerOptions"
+                @change="searchData"
+              ></el-date-picker>
+            </div>
+          </div>
+
+          <table class="bmi-table">
+            <thead class="bmi-table-head">
               <colgroup>
-                <col width="10%" />
-                <col width="30%" />
-                <col width="15%" />
-                <col width="15%" />
-                <col width="15%" />
-                <col width="15%" />
+                <col width="20%" />
+                <col width="20%" />
+                <col width="20%" />
+                <col width="20%" />
+                <col width="20%" />
               </colgroup>
               <tr>
-                <th>ID</th>
                 <th>日期</th>
                 <th>身高</th>
                 <th>体重</th>
@@ -133,9 +152,8 @@
                 <th>操作</th>
               </tr>
             </thead>
-            <tbody class="bim-table-body">
+            <tbody class="bmi-table-body">
               <tr v-for="(item, index) in tableData" :key="index">
-                <td>{{item.id}}</td>
                 <td>{{item.date}}</td>
                 <td>{{item.height + "cm"}}</td>
                 <td>{{item.weight + "kg"}}</td>
@@ -154,7 +172,7 @@
         </div>
       </el-main>
     </el-container>
-    <el-dialog title="BIM定义" :visible.sync="bmiDefDigVisible" width="60%">
+    <el-dialog title="bmi定义" :visible.sync="bmiDefDigVisible" width="60%">
       <div>
         <p>
           身体质量指数（BMI，Body Mass Index）是国际上常用的衡量人体肥胖程度和是否健康的重要标准，主要用于统计分析。肥胖程度的判断不能采用体重的绝对值，它天然与身高有关。
@@ -190,31 +208,101 @@ export default {
         columns: ["日期", "体重", "BMI"],
         rows: []
       },
-      chartSettings: {}
+      chartSettings: { dimension: ["日期"] },
+      search: {
+        dateRange: ""
+      },
+      datePickerOptions: {
+        shortcuts: [
+          {
+            text: "最近一周",
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
+              picker.$emit("pick", [start, end]);
+            }
+          },
+          {
+            text: "最近一个月",
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
+              picker.$emit("pick", [start, end]);
+            }
+          },
+          {
+            text: "最近三个月",
+            onClick(picker) {
+              const end = new Date();
+              const start = new Date();
+              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
+              picker.$emit("pick", [start, end]);
+            }
+          }
+        ]
+      }
     };
   },
   created() {
     this.$bus.on("get-bmi", () => {
       this.initData();
     });
+    this.initDatePicker();
   },
   mounted() {
     this.initData();
   },
   methods: {
+    initDatePicker() {
+      let dateRange = [];
+      const end = new Date();
+      const start = new Date();
+      start.setTime(start.getTime() - 3600 * 1000 * 24 * 10);
+      dateRange.push(start, end);
+      this.search.dateRange = dateRange;
+    },
     initData() {
+      let startDate = this.utils.getDate(this.search.dateRange[0]);
+      let endDate = this.utils.getDate(this.search.dateRange[1]);
+      console.log("initData", startDate, endDate);
+
+      let bmi = localStorage.getItem("bmi");
+      if (bmi && bmi != "[]") {
+        let bmis = JSON.parse(bmi);
+        bmis = bmis.filter(item => {
+          return item.id >= startDate && item.id <= endDate;
+        });
+        this.tableData = bmis;
+        this.total = bmis.length;
+        for (let i = 0; i < bmis.length; i++) {
+          let item = {
+            日期: bmis[i].date,
+            体重: bmis[i].weight,
+            BMI: bmis[i].bmi
+          };
+          this.chartData.rows.push(item);
+        }
+      } else {
+        this.tableData = [];
+        this.chartData.rows = [];
+      }
+    },
+    searchData() {
+      let startDate = this.utils.getDate(this.search.dateRange[0]);
+      let endDate = this.utils.getDate(this.search.dateRange[1]);
+      console.log("searchData", startDate, endDate);
       let bmi = localStorage.getItem("bmi");
       if (bmi) {
         let bmis = JSON.parse(bmi);
+        bmis = bmis.filter(item => {
+          return item.id >= startDate && item.id <= endDate;
+        });
         this.tableData = bmis;
         this.total = bmis.length;
-        let len = bmis.length > 30 ? 30 : bmis.length;
-
-        this.chartSettings = {
-          xAxisType: "time"
-        };
-
-        for (let i = 0; i < len; i++) {
+        this.chartData.rows = [];
+        for (let i = 0; i < bmis.length; i++) {
           let item = {
             日期: bmis[i].date,
             体重: bmis[i].weight,
@@ -235,22 +323,24 @@ export default {
         }
       });
     },
-    saveBMI(bmiValue) {
-      let d = new Date();
+    saveBMI(bmi) {
       let item = {
-        id: d.getTime(),
-        date: this.utils.getDatetime(d),
+        id: this.utils.getDate(),
+        date: this.utils.getDatetime(),
         height: this.bmiForm.height,
         weight: this.bmiForm.weight,
-        bmi: bmiValue.toFixed(1)
+        bmi: bmi.toFixed(1)
       };
       let isSaveBMI = this.isSaveBMI;
       if (isSaveBMI) {
-        let bmi = localStorage.getItem("bmi");
-        if (bmi) {
-          let bmis = JSON.parse(bmi);
-          bmis.push(item);
-          localStorage.setItem("bmi", JSON.stringify(bmis));
+        let bmis = localStorage.getItem("bmi");
+        if (bmis) {
+          let data = JSON.parse(bmis);
+          data = data.filter(bmi => {
+            return bmi.id != item.id;
+          });
+          data.push(item);
+          localStorage.setItem("bmi", JSON.stringify(data));
         } else {
           localStorage.setItem("bmi", JSON.stringify([item]));
         }
@@ -275,13 +365,16 @@ export default {
         }
       )
         .then(() => {
-          localStorage.deletedItem("bim");
+          localStorage.removeItem("bmi");
           this.$message({
             type: "success",
             message: "清除数据成功!"
           });
+          this.initData();
         })
-        .catch(() => {});
+        .catch(e => {
+          console.log(e);
+        });
     },
     resetForm(formName) {
       this.$refs[formName].resetFields();
@@ -308,7 +401,8 @@ export default {
         type: "success",
         message: "删除成功!"
       });
-      this.$bus.emit("get-bmi");
+      this.initData();
+      // this.$bus.emit("get-bmi");
     },
     backIndex() {
       this.$router.replace({ path: "/" });
@@ -368,7 +462,7 @@ export default {
   vertical-align: text-bottom;
 }
 
-.bim-qa {
+.bmi-qa {
   float: right;
   font-size: 14px;
   color: #409eff;
@@ -394,6 +488,12 @@ form {
   color: #409eff;
 }
 
+.form-note {
+  color: rgb(169, 169, 169);
+  font-size: 13px;
+  width: 50%;
+}
+
 .el-form-item {
   width: 340px;
 }
@@ -402,8 +502,8 @@ form {
   border-right: 1px solid #dddddd;
   position: absolute;
   left: 50%;
-  height: 250px;
-  top: 2%;
+  height: 370px;
+  top: 0;
 }
 
 .bmi-note {
@@ -417,6 +517,8 @@ form {
     font-size: 16px;
     padding: 10px;
     color: #409eff;
+    margin-top: 20px;
+    margin-bottom: 20px;
   }
 }
 
@@ -424,24 +526,27 @@ form {
   margin-top: 40px;
 }
 
-.bim-table {
+.bmi-table {
   width: 100%;
   border-bottom: 1px solid #ebebeb;
-  border-top: 1px solid #ebebeb;
   font-size: 14px;
 }
 
-.bim-table-head {
+.bmi-table-head {
   color: #909399;
   font-weight: 500;
   background-color: #f5f5f5;
 }
 
-.bim-table-body {
+.bmi-table-body {
   text-align: center;
   color: #606266;
 }
-
+.search-warpper {
+  display: inline-block;
+  font-size: 14px;
+  margin-left: 10%;
+}
 .el-pagination {
   text-align: center;
   margin-top: 15px;
